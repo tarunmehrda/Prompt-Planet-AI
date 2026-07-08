@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" fill="none" role="img" aria-label="Prompt Planet — the real cost of AI, made visible">
+  <defs>
+    <!-- Genji dragon-green sky gradient -->
+    <radialGradient id="sky" cx="62%" cy="38%" r="85%">
+      <stop offset="0%" stop-color="#0c2a24"/>
+      <stop offset="42%" stop-color="#07171b"/>
+      <stop offset="100%" stop-color="#04070d"/>
+    </radialGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7dffce"/>
+      <stop offset="50%" stop-color="#2ee6a6"/>
+      <stop offset="100%" stop-color="#12b5c9"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#eafff6"/>
+      <stop offset="55%" stop-color="#5cf2c0"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="planetTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3fbf7a"/>
+      <stop offset="100%" stop-color="#1f7a4d"/>
+    </linearGradient>
+    <linearGradient id="planetSide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#125e3a"/>
+      <stop offset="100%" stop-color="#06371f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2ee6a6" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#2ee6a6" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#2ee6a6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- TEXTURE: fine dragon-scale noise laid over the panel -->
+    <filter id="scales" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" type="matrix"
+        values="0 0 0 0 0.18  0 0 0 0 0.90  0 0 0 0 0.65  0 0 0 0.05 0"/>
+    </filter>
+    <!-- TEXTURE: soft cloud/grain for the planet surface -->
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="21" result="n"/>
+      <feColorMatrix in="n" type="matrix"
+        values="0 0 0 0 0.10  0 0 0 0 0.55  0 0 0 0 0.35  0 0 0 0.35 0"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="7"/></filter>
+
+    <clipPath id="panel"><rect width="1280" height="440" rx="28"/></clipPath>
+
+    <!-- one reusable low-poly tree -->
+    <g id="tree">
+      <rect x="-3" y="8" width="6" height="14" fill="#2a1a10"/>
+      <path d="M0 -26 L14 6 L-14 6 Z" fill="#2f9c5f"/>
+      <path d="M0 -26 L14 6 L0 6 Z" fill="#227a48"/>
+      <path d="M0 -14 L11 12 L-11 12 Z" fill="#37b06c"/>
+      <path d="M0 -14 L11 12 L0 12 Z" fill="#268a52"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#panel)">
+    <rect width="1280" height="440" fill="url(#sky)"/>
+    <rect width="1280" height="440" filter="url(#scales)" opacity="0.7"/>
+
+    <!-- animated grid floor for depth -->
+    <g stroke="#2ee6a6" stroke-opacity="0.08" stroke-width="1">
+      <path d="M0 300 H1280 M0 340 H1280 M0 380 H1280 M0 420 H1280"/>
+      <path d="M120 300 V440 M320 300 V440 M520 300 V440 M760 300 V440 M960 300 V440 M1160 300 V440"/>
+    </g>
+
+    <!-- ===== dragon-green orbit system (right) ===== -->
+    <g transform="translate(940 220)">
+      <ellipse rx="235" ry="235" fill="url(#glow)">
+        <animate attributeName="rx" values="228;245;228" dur="6s" repeatCount="indefinite"/>
+        <animate attributeName="ry" values="228;245;228" dur="6s" repeatCount="indefinite"/>
+      </ellipse>
+
+      <!-- rotating dashed rings -->
+      <circle r="196" fill="none" stroke="#2ee6a6" stroke-opacity="0.35" stroke-width="1.4"
+              stroke-dasharray="3 16">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="26s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="168" fill="none" stroke="#22d3ee" stroke-opacity="0.30" stroke-width="1.2"
+              stroke-dasharray="2 22">
+        <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="34s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- ===== the low-poly planet (3D isometric disc) ===== -->
+      <g>
+        <animateTransform attributeName="transform" type="translate" values="0 -6; 0 6; 0 -6" dur="7s" repeatCount="indefinite" additive="sum"/>
+        <!-- planet side (soil) -->
+        <ellipse cx="0" cy="70" rx="150" ry="42" fill="url(#planetSide)"/>
+        <rect x="-150" y="34" width="300" height="36" fill="url(#planetSide)"/>
+        <!-- planet top (grass) -->
+        <ellipse cx="0" cy="34" rx="150" ry="46" fill="url(#planetTop)"/>
+        <ellipse cx="0" cy="34" rx="150" ry="46" fill="#ffffff" filter="url(#grain)" opacity="0.5"/>
+        <!-- little lake -->
+        <ellipse cx="18" cy="40" rx="42" ry="13" fill="#1f7fae"/>
+        <ellipse cx="18" cy="38" rx="42" ry="12" fill="#33b4e0" opacity="0.75"/>
+        <!-- forest -->
+        <g>
+          <use href="#tree" transform="translate(-96 26) scale(0.72)"/>
+          <use href="#tree" transform="translate(-58 14) scale(0.95)"/>
+          <use href="#tree" transform="translate(-20 30) scale(0.8)"/>
+          <use href="#tree" transform="translate(78 20) scale(1.0)"/>
+          <use href="#tree" transform="translate(112 30) scale(0.7)"/>
+          <use href="#tree" transform="translate(48 6) scale(1.12)"/>
+          <use href="#tree" transform="translate(-118 40) scale(0.6)"/>
+        </g>
+      </g>
+
+      <!-- orbiting metric motes: water / energy / carbon -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="14s" repeatCount="indefinite"/>
+        <circle cx="196" cy="0" r="7" fill="#22d3ee">
+          <animate attributeName="r" values="6;9;6" dur="2.2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" from="120" to="480" dur="18s" repeatCount="indefinite"/>
+        <circle cx="168" cy="0" r="7" fill="#fbbf24">
+          <animate attributeName="r" values="9;6;9" dur="2.6s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" from="240" to="600" dur="22s" repeatCount="indefinite"/>
+        <circle cx="210" cy="0" r="7" fill="#a78bfa">
+          <animate attributeName="r" values="7;10;7" dur="3s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+
+    <!-- floating fireflies -->
+    <g fill="#7dffce">
+      <circle cx="120" cy="120" r="2"><animate attributeName="opacity" values="0;1;0" dur="3.4s" repeatCount="indefinite"/></circle>
+      <circle cx="260" cy="90" r="1.6"><animate attributeName="opacity" values="0;1;0" dur="4.1s" begin="0.6s" repeatCount="indefinite"/></circle>
+      <circle cx="500" cy="70" r="2.2"><animate attributeName="opacity" values="0;1;0" dur="3.8s" begin="1.2s" repeatCount="indefinite"/></circle>
+      <circle cx="70" cy="250" r="1.8"><animate attributeName="opacity" values="0;1;0" dur="4.6s" begin="0.3s" repeatCount="indefinite"/></circle>
+      <circle cx="600" cy="300" r="2"><animate attributeName="opacity" values="0;1;0" dur="3.2s" begin="1.8s" repeatCount="indefinite"/></circle>
+    </g>
+
+    <!-- ===== headline (left) ===== -->
+    <g transform="translate(72 150)">
+      <!-- leaf logo mark -->
+      <g transform="translate(0 -74)">
+        <rect width="52" height="52" rx="15" fill="url(#mint)"/>
+        <path d="M15 34 C15 20 30 15 38 15 C38 29 25 37 15 34 Z" fill="#04070d"/>
+        <path d="M18 33 C24 27 31 22 36 18" stroke="#04070d" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <text x="66" y="-40" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="30" font-weight="800" fill="#eafff6">Prompt<tspan fill="#2ee6a6">Planet</tspan></text>
+
+      <text x="0" y="20" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="62" font-weight="800" fill="#f4fbff">The real cost of AI,</text>
+      <g>
+        <text x="0" y="92" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="62" font-weight="800" fill="url(#title)">made visible.</text>
+        <!-- sheen sweep over the gradient words -->
+        <rect x="-40" y="52" width="120" height="56" fill="url(#sheen)" opacity="0.6">
+          <animate attributeName="x" values="-160;520" dur="4.5s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+
+      <!-- metric legend chips -->
+      <g transform="translate(2 132)" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" font-weight="600">
+        <g><circle cx="8" cy="-5" r="6" fill="#22d3ee"/><text x="22" y="0" fill="#9fb2cf">Water</text></g>
+        <g transform="translate(108 0)"><circle cx="8" cy="-5" r="6" fill="#fbbf24"/><text x="22" y="0" fill="#9fb2cf">Energy</text></g>
+        <g transform="translate(220 0)"><circle cx="8" cy="-5" r="6" fill="#a78bfa"/><text x="22" y="0" fill="#9fb2cf">Carbon</text></g>
+      </g>
+    </g>
+
+    <!-- panel border with a travelling dragon-green highlight -->
+    <rect x="1" y="1" width="1278" height="438" rx="27" fill="none" stroke="#2ee6a6" stroke-opacity="0.25" stroke-width="2"/>
+    <rect x="1" y="1" width="1278" height="438" rx="27" fill="none" stroke="url(#mint)" stroke-width="2.5"
+          stroke-dasharray="240 3200" stroke-linecap="round">
+      <animate attributeName="stroke-dashoffset" values="0;-3440" dur="9s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>

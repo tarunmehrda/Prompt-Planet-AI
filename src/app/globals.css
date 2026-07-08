@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   Prompt Planet — design system
+   Dark, cinematic, "deep space meets clean water" aesthetic.
+   ========================================================================= */
+
+@theme {
+  --color-ink: #05070d;
+  --color-ink-2: #090d18;
+  --color-surface: #0e1424;
+  --color-surface-2: #131b2e;
+
+  --color-brand: #34d399; /* eco green */
+  --color-brand-2: #10b981;
+  --color-water: #22d3ee; /* cyan */
+  --color-water-2: #38bdf8;
+  --color-energy: #fbbf24; /* amber */
+  --color-energy-2: #f59e0b;
+  --color-carbon: #a78bfa; /* violet smog */
+  --color-carbon-2: #8b5cf6;
+
+  --color-mist: #93a4c3;
+  --color-mist-2: #64748b;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-glow-brand: 0 0 40px -8px rgba(52, 211, 153, 0.55);
+  --shadow-glow-water: 0 0 40px -8px rgba(34, 211, 238, 0.55);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: #e8eefc;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Ambient background: deep space with faint aurora pools of light. */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60rem 60rem at 15% -10%, rgba(34, 211, 238, 0.14), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, rgba(52, 211, 153, 0.12), transparent 55%),
+    radial-gradient(70rem 60rem at 50% 120%, rgba(139, 92, 246, 0.12), transparent 60%),
+    linear-gradient(180deg, #05070d 0%, #070b16 50%, #05070d 100%);
+}
+
+.app-bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(148, 163, 210, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 210, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+}
+
+/* ------------------------------- utilities ------------------------------ */
+
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-strong {
+  background: linear-gradient(
+    180deg,
+    rgba(19, 27, 46, 0.85),
+    rgba(9, 13, 24, 0.85)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, #34d399 0%, #22d3ee 45%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(120deg, #fbbf24 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ring-glow {
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.4),
+    0 0 30px -6px rgba(52, 211, 153, 0.5);
+}
+
+/* Animated hero headline gradient */
+.animate-sheen {
+  background-size: 200% auto;
+  animation: sheen 6s linear infinite;
+}
+@keyframes sheen {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulseSoft 3.5s ease-in-out infinite;
+}
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#1c2740, #0e1424);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(#284067, #131b2e);
+  background-clip: padding-box;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.3);
+  color: #ffffff;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

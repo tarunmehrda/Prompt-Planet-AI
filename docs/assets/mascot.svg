@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220" fill="none" role="img" aria-label="Sprout, the Prompt Planet mascot">
+  <defs>
+    <radialGradient id="mglow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#2ee6a6" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#2ee6a6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mplanet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38cf86"/>
+      <stop offset="100%" stop-color="#0f7a48"/>
+    </linearGradient>
+    <linearGradient id="mleaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7dffce"/>
+      <stop offset="100%" stop-color="#2ee6a6"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="110" cy="118" rx="92" ry="92" fill="url(#mglow)"/>
+
+  <!-- gentle float for the whole character -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 -5;0 6;0 -5" dur="4s" repeatCount="indefinite"/>
+
+    <!-- planet body -->
+    <circle cx="110" cy="120" r="66" fill="url(#mplanet)"/>
+    <!-- planet ring -->
+    <ellipse cx="110" cy="128" rx="92" ry="24" fill="none" stroke="#7dffce" stroke-opacity="0.55" stroke-width="4" transform="rotate(-14 110 128)"/>
+    <!-- cheeks -->
+    <circle cx="82" cy="132" r="8.5" fill="#ff7fa8" opacity="0.85"/>
+    <circle cx="138" cy="132" r="8.5" fill="#ff7fa8" opacity="0.85"/>
+    <!-- eyes (blink via scale on the height) -->
+    <g fill="#05231a">
+      <ellipse cx="92" cy="116" rx="7" ry="9">
+        <animate attributeName="ry" values="9;9;1;9;9" keyTimes="0;0.45;0.5;0.55;1" dur="4.5s" repeatCount="indefinite"/>
+      </ellipse>
+      <ellipse cx="128" cy="116" rx="7" ry="9">
+        <animate attributeName="ry" values="9;9;1;9;9" keyTimes="0;0.45;0.5;0.55;1" dur="4.5s" repeatCount="indefinite"/>
+      </ellipse>
+    </g>
+    <circle cx="94" cy="113" r="2.2" fill="#eafff6"/>
+    <circle cx="130" cy="113" r="2.2" fill="#eafff6"/>
+    <!-- smile -->
+    <path d="M98 134 Q110 146 122 134" stroke="#05231a" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+    <!-- sprouting leaf on top, with a little sway -->
+    <g transform="translate(110 60)">
+      <animateTransform attributeName="transform" type="rotate" values="-8 0 0;8 0 0;-8 0 0" dur="3.2s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-2.5" y="0" width="5" height="18" rx="2.5" fill="#1f9d63"/>
+      <path d="M0 6 C -22 2 -26 -18 -8 -22 C -4 -8 0 -2 0 6 Z" fill="url(#mleaf)"/>
+      <path d="M0 2 C 20 -2 26 -20 8 -26 C 2 -12 0 -6 0 2 Z" fill="url(#mleaf)"/>
+    </g>
+  </g>
+
+  <!-- sparkles -->
+  <g fill="#7dffce">
+    <circle cx="40" cy="70" r="3"><animate attributeName="opacity" values="0;1;0" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="184" cy="86" r="2.4"><animate attributeName="opacity" values="0;1;0" dur="2.9s" begin="0.7s" repeatCount="indefinite"/></circle>
+    <circle cx="176" cy="168" r="2.6"><animate attributeName="opacity" values="0;1;0" dur="3.3s" begin="1.1s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>
