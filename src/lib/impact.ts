@@ -118,6 +118,36 @@ export function footprintForPrompt(typeId: PromptTypeId, gCO2ePerKwh: number): F
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * Capture classification — turn measured prompt/reply sizes (from the browser
+ * extension) into one of our prompt types. Kept deliberately simple and
+ * mirrored in `extension/footprint.js` so the popup and server agree.
+ * ------------------------------------------------------------------------- */
+
+/** Classify a captured exchange by how many characters the prompt & reply held. */
+export function classifyPromptType(
+  promptChars: number,
+  replyChars: number,
+  isImage = false,
+): PromptTypeId {
+  if (isImage) return "image";
+  const total = Math.max(0, promptChars) + Math.max(0, replyChars);
+  if (replyChars <= 240 && total <= 600) return "short";
+  if (replyChars <= 1600 && total <= 4000) return "chat";
+  return "long";
+}
+
+/** Footprint of a captured exchange, plus the type we classified it as. */
+export function footprintForCapture(
+  promptChars: number,
+  replyChars: number,
+  isImage: boolean,
+  gCO2ePerKwh: number,
+): { type: PromptTypeId; footprint: Footprint } {
+  const type = classifyPromptType(promptChars, replyChars, isImage);
+  return { type, footprint: footprintForPrompt(type, gCO2ePerKwh) };
+}
+
 /** A "mix" = how many prompts of each type. */
 export type PromptMix = Partial<Record<PromptTypeId, number>>;
 

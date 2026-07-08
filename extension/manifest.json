@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Planet — AI Footprint Tracker",
+  "version": "1.0.0",
+  "description": "Automatically measures the water, energy and CO₂ of your AI chats (ChatGPT, Claude, Gemini, Copilot & more) and sends the estimates to your Prompt Planet dashboard. Sizes only — never your messages.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Prompt Planet",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://www.perplexity.ai/*",
+        "https://perplexity.ai/*",
+        "https://poe.com/*",
+        "https://chat.deepseek.com/*",
+        "https://www.meta.ai/*",
+        "https://meta.ai/*",
+        "https://grok.com/*",
+        "https://chat.mistral.ai/*",
+        "https://huggingface.co/chat/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

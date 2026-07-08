@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>Prompt Planet</title>
+  </head>
+  <body>
+    <header class="hdr">
+      <div class="brand">
+        <span class="leaf" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+            <path d="M6 17C6 10 12 7 18 7C18 14 12 17 6 17Z" fill="#04070d"/>
+            <path d="M8 16C11 13 14 10 17 8" stroke="#04070d" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="name">Prompt<b>Planet</b></span>
+      </div>
+      <span id="status" class="status status--off" title="Connection to your dashboard">
+        <span class="dot"></span><span id="statusText">offline</span>
+      </span>
+    </header>
+
+    <section class="today">
+      <div class="today-head">
+        <span>Today</span>
+        <span id="promptCount" class="count">0 prompts</span>
+      </div>
+      <div class="grid">
+        <div class="stat water">
+          <div class="stat-ico">💧</div>
+          <div class="stat-val"><span id="water">0</span><small id="waterU">mL</small></div>
+          <div class="stat-lbl">Water</div>
+        </div>
+        <div class="stat energy">
+          <div class="stat-ico">⚡</div>
+          <div class="stat-val"><span id="energy">0</span><small id="energyU">Wh</small></div>
+          <div class="stat-lbl">Energy</div>
+        </div>
+        <div class="stat carbon">
+          <div class="stat-ico">☁️</div>
+          <div class="stat-val"><span id="co2">0</span><small id="co2U">g</small></div>
+          <div class="stat-lbl">Carbon</div>
+        </div>
+      </div>
+      <p id="lifetime" class="lifetime"></p>
+    </section>
+
+    <button id="openDash" class="btn btn--primary">Open dashboard →</button>
+
+    <details class="settings">
+      <summary>Settings</summary>
+      <label class="field">
+        <span>Dashboard URL</span>
+        <input id="endpoint" type="text" placeholder="http://localhost:3000" />
+      </label>
+      <label class="field">
+        <span>Electricity grid</span>
+        <select id="region">
+          <option value="clean">Clean (hydro / nuclear) · 40</option>
+          <option value="eu">Europe avg · 250</option>
+          <option value="us">United States avg · 380</option>
+          <option value="global">Global average · 480</option>
+          <option value="india">India avg · 630</option>
+          <option value="coal">Coal-heavy · 820</option>
+        </select>
+      </label>
+      <label class="field field--row">
+        <span>Tracking enabled</span>
+        <input id="enabled" type="checkbox" checked />
+      </label>
+      <div class="settings-actions">
+        <button id="save" class="btn btn--sm">Save</button>
+        <button id="reset" class="btn btn--ghost btn--sm">Reset today</button>
+      </div>
+      <p id="saved" class="saved"></p>
+    </details>
+
+    <footer class="ft">
+      Estimates only · sizes measured, never your messages.
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -53,7 +53,7 @@ export default function UsageChart({ data, color, unit }: Props) {
             fontSize: 12,
           }}
           labelStyle={{ color: "#93a4c3" }}
-          formatter={(v: number | string) => [`${v} ${unit}`, ""]}
+          formatter={(v) => [`${v} ${unit}`, ""] as [string, string]}
           cursor={{ stroke: color, strokeOpacity: 0.4 }}
         />
         <Area

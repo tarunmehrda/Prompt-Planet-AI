@@ -1,0 +1,96 @@
+:root {
+  --ink: #05070d;
+  --ink2: #0b1120;
+  --surface: #111a2e;
+  --brand: #2ee6a6;
+  --mint: #7dffce;
+  --water: #22d3ee;
+  --energy: #fbbf24;
+  --carbon: #a78bfa;
+  --mist: #93a4c3;
+  --mist2: #64748b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  width: 320px;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #e8eefc;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(46, 230, 166, 0.14), transparent 55%),
+    radial-gradient(120% 80% at 0% 0%, rgba(34, 211, 238, 0.12), transparent 55%),
+    var(--ink);
+  padding: 14px;
+}
+
+.hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.brand { display: flex; align-items: center; gap: 8px; }
+.leaf {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--mint), var(--brand));
+}
+.name { font-size: 15px; font-weight: 600; }
+.name b { color: var(--brand); font-weight: 600; }
+
+.status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.05); color: var(--mist);
+}
+.status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mist2); }
+.status--on { color: var(--brand); }
+.status--on .dot { background: var(--brand); box-shadow: 0 0 8px var(--brand); }
+.status--off .dot { background: #f2779a; }
+
+.today {
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  padding: 12px; margin-bottom: 12px;
+}
+.today-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.today-head > span:first-child { font-size: 12px; color: var(--mist2); text-transform: uppercase; letter-spacing: 0.06em; }
+.count { font-size: 13px; font-weight: 600; color: var(--brand); }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat {
+  border-radius: 12px; padding: 10px 8px; text-align: center;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+}
+.stat-ico { font-size: 15px; }
+.stat-val { margin-top: 4px; font-size: 17px; font-weight: 700; }
+.stat-val small { font-size: 10px; font-weight: 500; color: var(--mist); margin-left: 2px; }
+.stat-lbl { margin-top: 2px; font-size: 10px; color: var(--mist2); }
+.water .stat-val { color: var(--water); }
+.energy .stat-val { color: var(--energy); }
+.carbon .stat-val { color: var(--carbon); }
+.lifetime { margin-top: 10px; font-size: 11px; color: var(--mist2); text-align: center; }
+
+.btn {
+  width: 100%; border: none; cursor: pointer; border-radius: 12px;
+  font-size: 13px; font-weight: 600; padding: 11px 12px; color: var(--ink);
+  background: linear-gradient(90deg, var(--brand), var(--water));
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn--sm { width: auto; padding: 8px 14px; font-size: 12px; }
+.btn--ghost { background: rgba(255,255,255,0.06); color: var(--mist); }
+.btn--primary { margin-bottom: 12px; }
+
+.settings { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+.settings summary {
+  cursor: pointer; font-size: 12px; color: var(--mist); list-style: none;
+  padding: 4px 0; user-select: none;
+}
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary::before { content: "⚙ "; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 11px; color: var(--mist); }
+.field--row { flex-direction: row; align-items: center; justify-content: space-between; }
+.field input[type="text"], .field select {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 8px; color: #fff; font-size: 12px; outline: none;
+}
+.field input[type="text"]:focus, .field select:focus { border-color: rgba(46,230,166,0.6); }
+.field select option { background: var(--ink2); }
+.settings-actions { display: flex; gap: 8px; margin-top: 12px; }
+.saved { margin-top: 8px; font-size: 11px; color: var(--brand); min-height: 14px; }
+
+.ft { margin-top: 12px; font-size: 10px; color: var(--mist2); text-align: center; }

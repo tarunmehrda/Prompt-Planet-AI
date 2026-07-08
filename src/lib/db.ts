@@ -19,7 +19,8 @@ export interface User {
 
 export interface UsageEntry {
   id: string;
-  userId: string;
+  /** legacy per-account owner — optional now that the app is single-user/local */
+  userId?: string;
   /** ISO date (YYYY-MM-DD) the usage is attributed to */
   date: string;
   /** how many prompts were logged in this entry */
@@ -29,6 +30,10 @@ export interface UsageEntry {
   co2g: number;
   regionId: string;
   createdAt: string;
+  /** where the prompt happened: "chatgpt" | "claude" | "gemini" | "copilot" | "manual" | … */
+  source?: string;
+  /** classified prompt type: "short" | "chat" | "long" | "image" */
+  promptType?: string;
 }
 
 interface DBShape {
@@ -145,4 +150,33 @@ export async function getUsageForUser(userId: string): Promise<UsageEntry[]> {
   return db.usage
     .filter((u) => u.userId === userId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/* ----------------------- global (single-user) usage ---------------------- */
+
+/** Every logged prompt, oldest → newest. The app is now local/single-user. */
+export async function getAllUsage(): Promise<UsageEntry[]> {
+  const db = await read();
+  return [...db.usage].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/** Append one usage entry (from the extension or the manual calculator). */
+export async function addTrackedUsage(input: {
+  date: string;
+  prompts: number;
+  energyWh: number;
+  waterMl: number;
+  co2g: number;
+  regionId: string;
+  source?: string;
+  promptType?: string;
+}): Promise<UsageEntry> {
+  return mutate((db) => {
+    const entry: UsageEntry = {
+      id: id(),
+      createdAt: now(),
+      ...input,
+    };
+    return { db: { ...db, usage: [...db.usage, entry] }, result: entry };
+  });
 }

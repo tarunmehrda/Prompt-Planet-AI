@@ -1,331 +1,447 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Droplets,
   Zap,
   Cloud,
+  MessageSquare,
+  CalendarDays,
   ArrowRight,
-  Calculator,
-  LayoutDashboard,
-  Globe2,
-  Sparkles,
+  Puzzle,
+  Radio,
 } from "lucide-react";
-import { HeroCanvas } from "@/components/three/Scene3D";
+import type { UsageEntry } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
-import { Reveal } from "@/components/ui/Reveal";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { FootprintCanvas } from "@/components/three/Scene3D";
 import {
-  footprintForPrompt,
-  waterEquivalences,
-  energyEquivalences,
-  co2Equivalences,
-  COMPARE_ITEMS,
+  formatWater,
+  formatEnergy,
   formatCo2,
+  co2Equivalences,
   fmt,
 } from "@/lib/impact";
+import type { ChartPoint } from "@/components/dashboard/UsageChart";
 
-const GRID = 480; // global average grid for the landing story
-const typical = footprintForPrompt("chat", GRID);
+const UsageChart = dynamic(() => import("@/components/dashboard/UsageChart"), {
+  ssr: false,
+  loading: () => <div className="h-[280px] animate-pulse rounded-xl bg-white/[0.03]" />,
+});
 
-// One illustrative billion prompts a day (order-of-magnitude, not exact).
-const DAILY_PROMPTS = 1_000_000_000;
-
-const metricCards = [
-  {
-    icon: Droplets,
-    tint: "text-water",
-    ring: "from-water/30",
-    label: "Water",
-    value: typical.waterMl,
-    unit: "mL",
-    equiv: waterEquivalences(typical.waterMl)[0],
-    blurb: "for data-centre cooling & power",
-  },
-  {
-    icon: Zap,
-    tint: "text-energy",
-    ring: "from-energy/30",
-    label: "Energy",
-    value: typical.energyWh,
-    unit: "Wh",
-    equiv: energyEquivalences(typical.energyWh)[1],
-    blurb: "electricity to run the model",
-  },
-  {
-    icon: Cloud,
-    tint: "text-carbon",
-    ring: "from-carbon/30",
-    label: "CO₂",
-    value: typical.co2g,
-    unit: "g CO₂e",
-    equiv: co2Equivalences(typical.co2g)[0],
-    blurb: "on a global-average grid",
-  },
+type MetricKey = "co2g" | "waterMl" | "energyWh";
+const METRICS: { key: MetricKey; label: string; color: string; unit: string }[] = [
+  { key: "co2g", label: "Carbon", color: "#a78bfa", unit: "g CO₂e" },
+  { key: "waterMl", label: "Water", color: "#22d3ee", unit: "mL" },
+  { key: "energyWh", label: "Energy", color: "#fbbf24", unit: "Wh" },
 ];
 
-export default function LandingPage() {
-  const maxCo2 = Math.max(...COMPARE_ITEMS.map((c) => c.co2g));
-  const dailyCo2Tonnes = (typical.co2g * DAILY_PROMPTS) / 1_000_000;
+/** How each capture source is presented. */
+const SOURCES: Record<string, { label: string; emoji: string }> = {
+  chatgpt: { label: "ChatGPT", emoji: "🤖" },
+  claude: { label: "Claude", emoji: "🧠" },
+  gemini: { label: "Gemini", emoji: "✨" },
+  copilot: { label: "Copilot", emoji: "🧑‍✈️" },
+  perplexity: { label: "Perplexity", emoji: "🔎" },
+  poe: { label: "Poe", emoji: "🎭" },
+  deepseek: { label: "DeepSeek", emoji: "🐋" },
+  meta: { label: "Meta AI", emoji: "♾️" },
+  grok: { label: "Grok", emoji: "𝕏" },
+  mistral: { label: "Mistral", emoji: "🌬️" },
+  huggingface: { label: "HuggingChat", emoji: "🤗" },
+  manual: { label: "Calculator", emoji: "🧮" },
+  other: { label: "Other AI", emoji: "💬" },
+};
+const sourceOf = (s?: string) => SOURCES[s ?? "other"] ?? SOURCES.other;
+
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+export default function DashboardHome() {
+  const [entries, setEntries] = useState<UsageEntry[] | null>(null);
+  const [metric, setMetric] = useState<MetricKey>("co2g");
+  const [error, setError] = useState<string | null>(null);
+  const [live, setLive] = useState(false);
+
+  // Poll so the dashboard updates live as the extension logs prompts.
+  useEffect(() => {
+    let active = true;
+    async function load(mark = false) {
+      try {
+        const res = await fetch("/api/usage", { cache: "no-store" });
+        const data = await res.json();
+        if (!active) return;
+        setEntries(data.usage ?? []);
+        setError(null);
+        if (mark) {
+          setLive(true);
+          setTimeout(() => active && setLive(false), 1200);
+        }
+      } catch {
+        if (active) setError("Could not load your usage.");
+      }
+    }
+    load();
+    const t = setInterval(() => load(true), 4000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      active = false;
+      clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  const list = useMemo(() => entries ?? [], [entries]);
+
+  const totals = useMemo(
+    () =>
+      list.reduce(
+        (a, e) => ({
+          prompts: a.prompts + e.prompts,
+          waterMl: a.waterMl + e.waterMl,
+          energyWh: a.energyWh + e.energyWh,
+          co2g: a.co2g + e.co2g,
+        }),
+        { prompts: 0, waterMl: 0, energyWh: 0, co2g: 0 },
+      ),
+    [list],
+  );
+
+  const today = useMemo(() => {
+    const d = todayStr();
+    return list
+      .filter((e) => e.date === d)
+      .reduce(
+        (a, e) => ({
+          prompts: a.prompts + e.prompts,
+          waterMl: a.waterMl + e.waterMl,
+          energyWh: a.energyWh + e.energyWh,
+          co2g: a.co2g + e.co2g,
+        }),
+        { prompts: 0, waterMl: 0, energyWh: 0, co2g: 0 },
+      );
+  }, [list]);
+
+  // Source breakdown (all-time).
+  const bySource = useMemo(() => {
+    const m = new Map<string, { prompts: number; co2g: number }>();
+    for (const e of list) {
+      const k = e.source ?? "other";
+      const cur = m.get(k) ?? { prompts: 0, co2g: 0 };
+      cur.prompts += e.prompts;
+      cur.co2g += e.co2g;
+      m.set(k, cur);
+    }
+    return [...m.entries()]
+      .map(([k, v]) => ({ key: k, ...v }))
+      .sort((a, b) => b.prompts - a.prompts);
+  }, [list]);
+
+  // Aggregate to one point per day for the chart.
+  const chartData: ChartPoint[] = useMemo(() => {
+    const days = new Map<string, number>();
+    for (const e of list) days.set(e.date, (days.get(e.date) ?? 0) + e[metric]);
+    return [...days.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, value]) => ({
+        label: shortDate(date),
+        value: Number(value.toFixed(metric === "co2g" ? 2 : 1)),
+      }));
+  }, [list, metric]);
+
+  // Drive the 3D world from today's load (fall back to all-time if today is empty).
+  const drive = today.prompts > 0 ? today : totals;
+  const waterFraction = clamp01(drive.waterMl / 2000);
+  const energyFraction = clamp01(drive.energyWh / 400);
+  const co2Fraction = clamp01(drive.co2g / 250);
+  const coreScale = 0.7 + clamp01((waterFraction + energyFraction + co2Fraction) / 3) * 0.7;
+
+  const activeMetric = METRICS.find((m) => m.key === metric)!;
+  const water = formatWater(totals.waterMl);
+  const energy = formatEnergy(totals.energyWh);
+  const co2 = formatCo2(totals.co2g);
+  const tWater = formatWater(today.waterMl);
+  const tEnergy = formatEnergy(today.energyWh);
+  const tCo2 = formatCo2(today.co2g);
+  const daysLogged = new Set(list.map((e) => e.date)).size;
+
+  if (entries === null && !error) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-brand" />
+      </div>
+    );
+  }
+
+  const empty = list.length === 0;
 
   return (
-    <div className="relative">
-      {/* ============================ HERO ============================ */}
-      <section className="relative mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 pt-10 sm:px-6 lg:flex-row lg:gap-4 lg:pt-16">
-        <div className="relative z-10 max-w-xl text-center lg:text-left">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-mist">
-            <Sparkles className="h-3.5 w-3.5 text-brand" />
-            The hidden footprint of every prompt
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {/* ---------------- hero band ---------------- */}
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="flex flex-col justify-center">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full glass px-3 py-1 text-xs text-mist">
+            <Radio className={`h-3.5 w-3.5 ${live ? "text-brand animate-pulse" : "text-mist-2"}`} />
+            {live ? "Syncing…" : "Live footprint tracker"}
           </div>
-          <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
-            The real cost of AI,
-            <br />
-            <span className="text-gradient animate-sheen">made visible.</span>
+          <h1 className="mt-4 text-3xl font-bold sm:text-4xl">
+            Your AI footprint,{" "}
+            <span className="text-gradient">as it happens.</span>
           </h1>
-          <p className="mt-6 text-pretty text-base leading-relaxed text-mist sm:text-lg">
-            Every time you ask an AI a question, somewhere a data-centre sips water,
-            burns electricity and breathes out CO₂. Log in and watch it happen in 3D —
-            then track and shrink your own footprint.
+          <p className="mt-3 max-w-xl text-mist">
+            Every prompt captured by the Prompt&nbsp;Planet extension lands here — water, energy and
+            carbon, drop by drop. The world on the right breathes with today&rsquo;s load.
           </p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-start">
-            <Button href="/signup" variant="primary" size="lg">
-              Start exploring
+
+          {/* today's quick stats */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MiniStat label="Today" value={fmt(today.prompts)} unit="prompts" tint="text-brand" />
+            <MiniStat label="Water" value={tWater.value} unit={tWater.unit} tint="text-water" />
+            <MiniStat label="Energy" value={tEnergy.value} unit={tEnergy.unit} tint="text-energy" />
+            <MiniStat label="Carbon" value={tCo2.value} unit={tCo2.unit} tint="text-carbon" />
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button href="/extension" variant="primary" size="md">
+              <Puzzle className="h-4 w-4" />
+              {empty ? "Install the extension" : "Extension settings"}
+            </Button>
+            <Button href="/calculator" variant="outline" size="md">
+              Open calculator
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button href="/calculator" variant="outline" size="lg">
-              <Calculator className="h-4 w-4" />
-              Try the calculator
-            </Button>
-          </div>
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-mist-2 lg:justify-start">
-            <span className="flex items-center gap-1.5">
-              <Droplets className="h-4 w-4 text-water" /> Water
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-energy" /> Energy
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Cloud className="h-4 w-4 text-carbon" /> Carbon
-            </span>
           </div>
         </div>
 
-        <div className="relative h-[46vh] w-full sm:h-[56vh] lg:h-[72vh] lg:flex-1">
-          <HeroCanvas />
-          <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-[11px] text-mist-2">
-            drag to spin the planet
+        <div className="relative h-[38vh] min-h-[300px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-surface/60 to-ink">
+          <FootprintCanvas
+            waterFraction={waterFraction}
+            energyFraction={energyFraction}
+            co2Fraction={co2Fraction}
+            coreScale={coreScale}
+          />
+          <div className="pointer-events-none absolute left-4 top-4 rounded-full glass px-3 py-1 text-xs text-mist">
+            {today.prompts > 0 ? `today · ${today.prompts} prompts` : "waiting for prompts…"}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ===================== ONE PROMPT ===================== */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wider text-brand">Chapter 1</p>
-          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">What one prompt really costs</h2>
-          <p className="mt-4 text-mist">
-            Here&rsquo;s a single, typical AI chat reply — the kind you send dozens of times a
-            day without thinking. These are estimated, order-of-magnitude figures.
-          </p>
-        </Reveal>
+      {empty ? (
+        <EmptyState />
+      ) : (
+        <>
+          {/* ---------------- all-time stat cards ---------------- */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={Cloud} tint="text-carbon" label="Total carbon" value={co2.value} unit={co2.unit} />
+            <StatCard icon={Droplets} tint="text-water" label="Total water" value={water.value} unit={water.unit} />
+            <StatCard icon={Zap} tint="text-energy" label="Total energy" value={energy.value} unit={energy.unit} />
+            <StatCard
+              icon={MessageSquare}
+              tint="text-brand"
+              label="Prompts tracked"
+              value={fmt(totals.prompts)}
+              unit=""
+            />
+          </div>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-3">
-          {metricCards.map((c, i) => (
-            <Reveal key={c.label} delay={i * 0.1}>
-              <div className="group relative h-full overflow-hidden rounded-3xl glass p-7">
-                <div
-                  className={`pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br ${c.ring} to-transparent blur-2xl`}
-                />
-                <c.icon className={`h-8 w-8 ${c.tint}`} />
-                <div className="mt-6 flex items-baseline gap-2">
-                  <AnimatedNumber
-                    value={c.value}
-                    decimals={c.value < 10 ? 2 : 0}
-                    className={`text-5xl font-bold tabular-nums ${c.tint}`}
-                  />
-                  <span className="text-lg text-mist">{c.unit}</span>
-                </div>
-                <p className="mt-1 text-sm text-mist-2">{c.blurb}</p>
-                <div className="mt-6 flex items-center gap-2 rounded-xl bg-white/[0.03] px-3 py-2.5 text-sm text-mist">
-                  <span className="text-lg">{c.equiv.icon}</span>
-                  <span>
-                    ≈ <b className="text-white">{fmt(c.equiv.value)}</b> {c.equiv.unit}{" "}
-                    {c.equiv.label}
-                  </span>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ===================== SCALE ===================== */}
-      <section className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-b from-surface to-ink-2 p-8 sm:p-14">
-            <Globe2 className="absolute -right-10 -top-10 h-56 w-56 text-white/[0.03]" />
-            <p className="text-sm font-medium uppercase tracking-wider text-water">Chapter 2</p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-bold sm:text-4xl">
-              One prompt is tiny. Now multiply it by the whole planet.
-            </h2>
-            <p className="mt-4 max-w-2xl text-mist">
-              The world sends on the order of <b className="text-white">a billion</b> AI prompts
-              every single day. At that scale, those milligrams of CO₂ add up fast.
-            </p>
-
-            <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          {/* ---------------- chart ---------------- */}
+          <div className="mt-6 rounded-3xl glass p-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-4xl font-bold tabular-nums text-water sm:text-5xl">
-                  <AnimatedNumber
-                    value={(typical.waterMl * DAILY_PROMPTS) / 1_000_000_000}
-                    decimals={0}
-                  />
-                  <span className="ml-1 text-xl text-mist">ML</span>
-                </div>
-                <p className="mt-1 text-sm text-mist-2">
-                  megalitres of water / day (≈{" "}
-                  {fmt((typical.waterMl * DAILY_PROMPTS) / 1_000_000_000 / 2.5)} Olympic pools)
+                <h3 className="text-lg font-semibold">Footprint per day</h3>
+                <p className="text-sm text-mist-2">
+                  {daysLogged} {daysLogged === 1 ? "day" : "days"} tracked · showing{" "}
+                  {activeMetric.label.toLowerCase()}
                 </p>
               </div>
-              <div>
-                <div className="text-4xl font-bold tabular-nums text-energy sm:text-5xl">
-                  <AnimatedNumber
-                    value={(typical.energyWh * DAILY_PROMPTS) / 1_000_000_000}
-                    decimals={0}
-                  />
-                  <span className="ml-1 text-xl text-mist">GWh</span>
-                </div>
-                <p className="mt-1 text-sm text-mist-2">
-                  gigawatt-hours / day (≈ a small country&rsquo;s draw)
-                </p>
-              </div>
-              <div>
-                <div className="text-4xl font-bold tabular-nums text-carbon sm:text-5xl">
-                  <AnimatedNumber value={dailyCo2Tonnes} decimals={0} />
-                  <span className="ml-1 text-xl text-mist">t</span>
-                </div>
-                <p className="mt-1 text-sm text-mist-2">tonnes of CO₂e / day</p>
+              <div className="flex gap-1.5 rounded-full glass p-1">
+                {METRICS.map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => setMetric(m.key)}
+                    className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
+                      metric === m.key ? "bg-white/10 text-white" : "text-mist hover:text-white"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <p className="mt-8 text-xs text-mist-2">
-              Illustrative: assumes ~1 billion &ldquo;typical&rdquo; prompts/day. Real totals depend
-              on model mix and hardware — the point is the order of magnitude.
-            </p>
+            <UsageChart data={chartData} color={activeMetric.color} unit={activeMetric.unit} />
           </div>
-        </Reveal>
-      </section>
 
-      {/* ===================== COMPARE ===================== */}
-      <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium uppercase tracking-wider text-carbon">Chapter 3</p>
-          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">How AI stacks up against daily life</h2>
-          <p className="mt-4 text-mist">
-            Perspective matters. A prompt is small next to a burger or a car — but it&rsquo;s not
-            nothing, and it scales. (CO₂e per item, compressed scale for visibility.)
-          </p>
-        </Reveal>
+          {/* ---------------- sources + recent ---------------- */}
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <div className="rounded-3xl glass p-6">
+              <h3 className="text-lg font-semibold">Where it came from</h3>
+              <p className="mt-1 text-sm text-mist-2">Prompts by AI assistant.</p>
+              <div className="mt-5 space-y-3">
+                {bySource.map((s) => {
+                  const meta = sourceOf(s.key);
+                  const pct = totals.prompts ? (s.prompts / totals.prompts) * 100 : 0;
+                  return (
+                    <div key={s.key}>
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <span>{meta.emoji}</span>
+                          <span className="font-medium">{meta.label}</span>
+                        </span>
+                        <span className="tabular-nums text-mist">{fmt(s.prompts)}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-brand to-water"
+                          style={{ width: `${Math.max(4, pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-        <div className="mt-12 space-y-3">
-          {COMPARE_ITEMS.map((item, i) => {
-            // toFixed keeps server + client render byte-identical (avoids
-            // Math.pow last-digit hydration mismatches).
-            const width = Math.max(Math.pow(item.co2g / maxCo2, 0.4) * 100, 4).toFixed(2);
-            const isAI = item.label.startsWith("One AI");
-            const co2 = formatCo2(item.co2g);
-            return (
-              <Reveal key={item.label} delay={i * 0.05}>
-                <div className="flex items-center gap-4">
-                  <div className="flex w-40 shrink-0 items-center gap-2 text-sm">
-                    <span className="text-lg">{item.emoji}</span>
-                    <span className={isAI ? "font-semibold text-white" : "text-mist"}>
-                      {item.label}
-                    </span>
-                  </div>
-                  <div className="relative h-9 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+            <div className="rounded-3xl glass p-6 lg:col-span-2">
+              <h3 className="mb-4 text-lg font-semibold">Recent prompts</h3>
+              <div className="space-y-2">
+                {[...list].reverse().slice(0, 7).map((e) => {
+                  const meta = sourceOf(e.source);
+                  return (
                     <div
-                      className={`h-full rounded-lg ${
-                        isAI
-                          ? "bg-gradient-to-r from-brand to-water"
-                          : "bg-gradient-to-r from-carbon-2/60 to-carbon/60"
-                      }`}
-                      style={{ width: `${width}%` }}
-                    />
-                    <span className="absolute inset-y-0 right-3 flex items-center text-xs font-medium text-white/90">
-                      {co2.value} {co2.unit}
-                    </span>
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ===================== FEATURES ===================== */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            {
-              icon: Calculator,
-              title: "Interactive calculator",
-              body: "Set how you use AI and watch a live 3D world fill with your water, energy and carbon.",
-              href: "/calculator",
-            },
-            {
-              icon: LayoutDashboard,
-              title: "Personal dashboard",
-              body: "Log your usage and track your footprint over time with clean charts, saved to your account.",
-              href: "/dashboard",
-            },
-            {
-              icon: Globe2,
-              title: "Grounded in research",
-              body: "Estimates anchored to public reports, with adjustable assumptions and honest ranges.",
-              href: "/signup",
-            },
-          ].map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.1}>
-              <Link
-                href={f.href}
-                className="group flex h-full flex-col rounded-3xl glass p-7 transition-all hover:-translate-y-1 hover:border-white/20"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand/20 to-water/20 text-brand">
-                  <f.icon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-5 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-mist">{f.body}</p>
-                <span className="mt-5 flex items-center gap-1 text-sm text-brand">
-                  Explore
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ===================== FINAL CTA ===================== */}
-      <section className="mx-auto max-w-4xl px-4 py-24 sm:px-6">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-brand/15 via-surface to-water/10 p-10 text-center sm:p-16">
-            <h2 className="text-3xl font-bold sm:text-4xl">See your own AI footprint</h2>
-            <p className="mx-auto mt-4 max-w-lg text-mist">
-              Create a free account, run the calculator, and start a dashboard that grows with you.
-              No cost, no external tracking — your data stays on this server.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/signup" variant="primary" size="lg">
-                Create free account
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button href="/login" variant="outline" size="lg">
-                I already have one
-              </Button>
+                      key={e.id}
+                      className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-base">{meta.emoji}</span>
+                        <span className="font-medium">{meta.label}</span>
+                        <span className="hidden text-mist-2 sm:inline">
+                          · {e.promptType ?? "chat"}
+                        </span>
+                        <span className="flex items-center gap-1 text-mist-2">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {fullDate(e.createdAt)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="text-water">
+                          {formatWater(e.waterMl).value}
+                          {formatWater(e.waterMl).unit}
+                        </span>
+                        <span className="text-energy">
+                          {formatEnergy(e.energyWh).value}
+                          {formatEnergy(e.energyWh).unit}
+                        </span>
+                        <span className="text-carbon">
+                          {formatCo2(e.co2g).value}
+                          {formatCo2(e.co2g).unit}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </Reveal>
-      </section>
+
+          {/* ---------------- in perspective ---------------- */}
+          <div className="mt-6 rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 to-transparent p-6">
+            <h3 className="text-lg font-semibold">In perspective</h3>
+            <p className="mt-2 text-sm text-mist">
+              Your tracked carbon so far is like driving{" "}
+              <span className="font-bold text-brand">
+                <AnimatedNumber value={co2Equivalences(totals.co2g)[0].value} decimals={0} /> m
+              </span>{" "}
+              in a petrol car — and a tree would need{" "}
+              <span className="font-bold text-white">
+                {fmt(co2Equivalences(totals.co2g)[1].value)} days
+              </span>{" "}
+              to reabsorb it.
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function MiniStat({ label, value, unit, tint }: { label: string; value: string; unit: string; tint: string }) {
+  return (
+    <div className="rounded-2xl glass p-3">
+      <div className="text-xs text-mist-2">{label}</div>
+      <div className="mt-1 flex items-baseline gap-1">
+        <span className={`text-xl font-bold tabular-nums ${tint}`}>{value}</span>
+        <span className="text-[11px] text-mist">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  tint,
+  label,
+  value,
+  unit,
+}: {
+  icon: typeof Cloud;
+  tint: string;
+  label: string;
+  value: string;
+  unit: string;
+}) {
+  return (
+    <div className="rounded-3xl glass p-6">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-mist">{label}</span>
+        <Icon className={`h-5 w-5 ${tint}`} />
+      </div>
+      <div className="mt-4 flex items-baseline gap-1.5">
+        <span className={`text-3xl font-bold tabular-nums ${tint}`}>{value}</span>
+        <span className="text-sm text-mist">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="mt-8 rounded-3xl glass p-12 text-center">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-brand/20 to-water/20">
+        <Puzzle className="h-8 w-8 text-brand" />
+      </div>
+      <h3 className="mt-6 text-xl font-semibold">No prompts tracked yet</h3>
+      <p className="mx-auto mt-2 max-w-md text-mist">
+        Install the Prompt&nbsp;Planet browser extension, then chat with ChatGPT, Claude, Gemini or
+        Copilot as usual. Each exchange shows up here automatically — no copy-paste, no accounts.
+      </p>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button href="/extension" variant="primary" size="lg">
+          <Puzzle className="h-4 w-4" />
+          Get the extension
+        </Button>
+        <Button href="/calculator" variant="outline" size="lg">
+          Or estimate manually
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function fullDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

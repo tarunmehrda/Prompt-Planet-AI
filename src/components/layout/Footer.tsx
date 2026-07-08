@@ -24,11 +24,14 @@ export function Footer() {
         <div className="mt-6 flex flex-col gap-2 text-xs text-mist-2 sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} Prompt Planet · A demo project.</span>
           <div className="flex gap-4">
+            <Link href="/" className="hover:text-white">
+              Dashboard
+            </Link>
             <Link href="/calculator" className="hover:text-white">
               Calculator
             </Link>
-            <Link href="/dashboard" className="hover:text-white">
-              Dashboard
+            <Link href="/extension" className="hover:text-white">
+              Extension
             </Link>
           </div>
         </div>

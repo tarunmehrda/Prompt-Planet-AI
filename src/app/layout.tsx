@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/providers/AuthProvider";
 import { NavBar } from "@/components/layout/NavBar";
 import { Footer } from "@/components/layout/Footer";
 
@@ -16,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prompt Planet — The real cost of AI, made visible",
+  title: "Prompt Planet — Track the real footprint of your AI use",
   description:
-    "Log in and watch, in 3D, how much water, energy and CO₂ a single AI prompt really uses — then track and shrink your own footprint.",
+    "Install the Prompt Planet browser extension and watch, in living 3D, how much water, energy and CO₂ your everyday AI chats really use — automatically tracked, privately, on your own machine.",
 };
 
 export default function RootLayout({
@@ -34,11 +33,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <div className="app-bg" aria-hidden />
         <div className="app-bg-grid" aria-hidden />
-        <AuthProvider>
-          <NavBar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </AuthProvider>
+        <NavBar />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Droplets, Zap, Cloud, Check, Loader2, Save, RotateCcw } from "lucide-react";
-import { AuthGate } from "@/components/auth/AuthGate";
 import { FootprintCanvas } from "@/components/three/Scene3D";
 import { Button } from "@/components/ui/Button";
 import {
@@ -33,11 +32,7 @@ const TIMEFRAMES: { id: Timeframe; label: string; factor: number }[] = [
 const DEFAULT_MIX: Record<PromptTypeId, number> = { short: 20, chat: 12, long: 3, image: 2 };
 
 export default function CalculatorPage() {
-  return (
-    <AuthGate>
-      <Calculator />
-    </AuthGate>
-  );
+  return <Calculator />;
 }
 
 function Calculator() {
