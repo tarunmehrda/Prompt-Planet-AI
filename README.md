@@ -305,3 +305,5 @@ Figures are estimates for education — an order-of-magnitude guide, not exact t
 <img src="https://img.shields.io/badge/🐉_Prompt_Planet-the_real_cost_of_AI,_made_visible-2EE6A6?style=for-the-badge&labelColor=05070d" alt="Prompt Planet"/>
 
 </div>
+#   P r o m p t - P l a n e t - A I  
+ 
